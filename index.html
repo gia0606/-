@@ -1,0 +1,572 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>GreenStep - 걸음으로 자라는 나무</title>
+<style>
+  :root{
+    --bg:#f6fff8;
+    --primary:#2d6a4f;
+    --accent:#7bd389;
+    --wood:#8b5a2b;
+    --card:#ffffff;
+    --muted:#6c757d;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    font-family:Inter, "Noto Sans KR", Arial, sans-serif;
+    background:linear-gradient(180deg,#eafaf0 0%,var(--bg) 100%);
+    color:#173f2b;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-height:100vh;
+    padding:24px;
+  }
+  .app{
+    width:100%;
+    max-width:980px;
+    background:var(--card);
+    border-radius:16px;
+    box-shadow:0 10px 30px rgba(20,40,20,0.08);
+    overflow:hidden;
+    display:grid;
+    grid-template-columns: 420px 1fr;
+    gap:18px;
+    padding:20px;
+  }
+
+  /* LEFT: Tree display */
+  .panel-tree{
+    padding:18px;
+    border-radius:12px;
+    background:linear-gradient(180deg, #ffffff 0%, #f6fff8 100%);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+  .tree-stage{
+    width:260px;
+    height:320px;
+    position:relative;
+    margin-bottom:12px;
+    background: radial-gradient(circle at 50% 10%, #dff7e8, transparent 30%);
+    border-radius:14px;
+    display:flex;
+    align-items:flex-end;
+    justify-content:center;
+  }
+  .trunk{
+    width:80px;
+    height:130px;
+    background:linear-gradient(#7a4b2a,#8b5a2b);
+    border-radius:20px 20px 8px 8px;
+    position:relative;
+    z-index:2;
+    box-shadow:inset 0 -6px 18px rgba(0,0,0,0.06);
+  }
+  .leaves{
+    position:absolute;
+    top:28px;
+    width:220px;
+    height:180px;
+    z-index:1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transition:transform .6s;
+  }
+  .leaves .layer{
+    width:160px;height:160px;border-radius:50%;
+    background: radial-gradient(circle at 35% 30%, #7bd389, #3ba75e 70%);
+    box-shadow:0 10px 30px rgba(20,60,20,0.15);
+    position:absolute;
+    transform-origin:center;
+  }
+  .fruit{
+    position:absolute;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:white;
+    font-weight:700;
+    box-shadow: 0 6px 18px rgba(10,30,10,0.12);
+    transition:transform .4s, width .4s, height .4s, opacity .4s;
+  }
+
+  /* Level box */
+  .level-box{
+    width:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:12px;
+    margin-top:8px;
+  }
+  .level-indicator{
+    background: linear-gradient(180deg,#ffffff,#f0f6f2);
+    border-radius:10px;
+    padding:8px 12px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    box-shadow:0 6px 14px rgba(12,40,20,0.05);
+  }
+  .xp-bar{
+    width:180px;
+    height:12px;
+    background:#e6f3ea;
+    border-radius:10px;
+    overflow:hidden;
+  }
+  .xp-fill{
+    height:100%;
+    background:linear-gradient(90deg,#9de2a8,#3bb86a);
+    width:0%;
+    transition:width .6s;
+  }
+  .stat{
+    font-size:14px;
+    color:var(--muted);
+    text-align:center;
+    margin-top:8px;
+  }
+
+  /* RIGHT: Controls and log */
+  .panel-controls{
+    padding:18px;
+    border-radius:12px;
+    background:linear-gradient(180deg,#fff 0%,#f7fff8 100%);
+    display:flex;
+    flex-direction:column;
+  }
+  .controls-row{
+    display:flex;
+    gap:10px;
+    align-items:center;
+    margin-bottom:12px;
+  }
+  input[type="number"]{
+    padding:10px 12px;
+    border-radius:10px;
+    border:1px solid #e8efe9;
+    width:100%;
+    font-size:15px;
+  }
+  button{
+    background:var(--primary);
+    color:white;
+    border:none;
+    padding:10px 14px;
+    border-radius:10px;
+    cursor:pointer;
+    font-weight:600;
+    box-shadow:0 6px 14px rgba(20,60,30,0.12);
+  }
+  button.secondary{
+    background:transparent;color:var(--primary);
+    border:1px solid #e6f3ea;
+    box-shadow:none;font-weight:600;
+  }
+  .small{
+    padding:8px 10px;font-size:14px;border-radius:8px;
+  }
+
+  .info-cards{
+    display:flex;
+    gap:10px;
+    margin-bottom:12px;
+    flex-wrap:wrap;
+  }
+  .card{
+    flex:1 1 30%;
+    min-width:130px;
+    background:linear-gradient(180deg,#ffffff,#f6fff8);
+    border-radius:10px;
+    padding:10px;
+    text-align:center;
+    box-shadow:0 6px 14px rgba(10,30,10,0.04);
+  }
+  .card h3{margin:0;font-size:18px;color:var(--primary)}
+  .card p{margin:6px 0 0;color:var(--muted);font-size:13px}
+
+  .log{
+    margin-top:12px;
+    background:#fbfffb;
+    border-radius:10px;
+    padding:10px;
+    height:160px;
+    overflow:auto;
+    border:1px dashed #e6f3ea;
+  }
+
+  .footer{
+    margin-top:auto;
+    display:flex;
+    gap:10px;
+    align-items:center;
+    justify-content:space-between;
+  }
+
+  @media(max-width:900px){
+    .app{grid-template-columns:1fr; padding:14px}
+    .tree-stage{width:220px;height:260px}
+  }
+</style>
+</head>
+<body>
+<div class="app" role="application" aria-label="GreenStep App">
+  <!-- LEFT: Tree -->
+  <div class="panel-tree" aria-hidden="false">
+    <div style="width:100%;display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+      <h2 style="margin:0;color:var(--primary)">🌿 내 나무</h2>
+      <div style="font-size:13px;color:var(--muted)">GreenStep</div>
+    </div>
+
+    <div class="tree-stage" id="treeStage" role="img" aria-label="가상나무">
+      <div class="leaves" id="leaves">
+        <div class="layer"></div>
+      </div>
+      <!-- fruits will be injected -->
+      <div class="trunk"></div>
+    </div>
+
+    <div class="level-box">
+      <div class="level-indicator">
+        <div style="text-align:right;font-weight:700;color:var(--primary);min-width:46px">Lv <span id="levelNum">1</span></div>
+        <div style="font-size:12px;color:var(--muted);min-width:120px;text-align:left">경험치 <span id="xpText">0/10</span></div>
+        <div class="xp-bar" aria-hidden="false" title="레벨 진행">
+          <div class="xp-fill" id="xpFill" style="width:0%"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="stat">
+      총 걸음: <strong id="totalSteps">0</strong> 보 · 총 포인트: <strong id="totalPoints">0</strong> P
+    </div>
+
+    <div style="margin-top:10px;font-size:13px;color:var(--muted);text-align:center">
+      과일 크기가 클수록 보상이 커져요 🍎✨
+    </div>
+  </div>
+
+  <!-- RIGHT: Controls -->
+  <div class="panel-controls">
+    <h3 style="margin:0 0 10px 0;color:var(--primary)">걸음 입력 및 시뮬레이션</h3>
+
+    <div class="controls-row">
+      <input id="inputSteps" type="number" placeholder="추가할 걸음 수를 입력하세요 (예: 150)" min="1" />
+      <button id="addStepsBtn" class="small">걸음 추가</button>
+      <button id="simBtn" class="small secondary">시뮬레이트 100걸음</button>
+    </div>
+
+    <div class="info-cards" aria-live="polite">
+      <div class="card">
+        <h3 id="nextRewardText">다음보상</h3>
+        <p id="nextRewardDesc">작은 과일 (50P)</p>
+      </div>
+      <div class="card">
+        <h3 id="harvestStatus">수확 가능</h3>
+        <p id="harvestDesc">포인트 500 이상 시 활성화</p>
+      </div>
+      <div class="card">
+        <h3 id="conversion">전환비율</h3>
+        <p>100걸음 = 1포인트</p>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;align-items:center;margin-bottom:8px">
+      <button id="harvestBtn" class="small" disabled>🍒 수확하기</button>
+      <button id="resetBtn" class="small secondary">초기화</button>
+    </div>
+
+    <div class="log" id="logArea" aria-live="polite">
+      <div style="font-size:13px;color:var(--muted)">활동 로그가 여기에 표시됩니다.</div>
+    </div>
+
+    <div class="footer">
+      <div style="font-size:13px;color:var(--muted)">저장: LocalStorage</div>
+      <div style="font-size:13px;color:var(--muted)">개발: GreenStep Demo</div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =========================
+   GreenStep - single file
+   - 100 steps = 1 point
+   - Level thresholds and XP progress
+   - Fruit visuals scale with points
+   - LocalStorage persistence
+   ========================= */
+
+const STORAGE_KEY = 'greenstep_v1';
+
+// Config: conversion and thresholds
+const STEPS_PER_POINT = 100; // <- 변경된 규칙: 100걸음 = 1포인트
+
+// Define level thresholds (points required to reach this level)
+const LEVEL_THRESHOLDS = [0, 10, 50, 100, 200, 500]; // points for Lv1, Lv2, Lv3...
+// Reward definitions (example)
+const REWARDS = [
+  {points:10, name:'새싹 보상'},
+  {points:50, name:'작은 과일 보상'},
+  {points:100, name:'중간 과일 보상'},
+  {points:200, name:'큰 과일 보상'},
+  {points:500, name:'수확 보상'}
+];
+
+// App state
+let state = {
+  totalSteps: 0,
+  totalPoints: 0,
+  lastActionLog: '',
+  timestamps: []
+};
+
+// UI refs
+const totalStepsEl = document.getElementById('totalSteps');
+const totalPointsEl = document.getElementById('totalPoints');
+const xpFillEl = document.getElementById('xpFill');
+const levelNumEl = document.getElementById('levelNum');
+const xpTextEl = document.getElementById('xpText');
+const treeStage = document.getElementById('treeStage');
+const leaves = document.getElementById('leaves');
+const logArea = document.getElementById('logArea');
+const nextRewardText = document.getElementById('nextRewardText');
+const nextRewardDesc = document.getElementById('nextRewardDesc');
+const harvestBtn = document.getElementById('harvestBtn');
+const harvestStatus = document.getElementById('harvestStatus');
+const harvestDesc = document.getElementById('harvestDesc');
+
+const inputSteps = document.getElementById('inputSteps');
+const addStepsBtn = document.getElementById('addStepsBtn');
+const simBtn = document.getElementById('simBtn');
+const resetBtn = document.getElementById('resetBtn');
+
+// Helpers: persistence
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw){
+      const parsed = JSON.parse(raw);
+      // validate minimal keys
+      if(typeof parsed.totalSteps === 'number' && typeof parsed.totalPoints === 'number'){
+        state = parsed;
+        return;
+      }
+    }
+  }catch(e){ console.warn('load failed', e) }
+  // otherwise state stays default
+}
+function saveState(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }catch(e){ console.warn('save failed', e) }
+}
+
+// Compute points from steps (integer division)
+function stepsToPoints(steps){
+  return Math.floor(steps / STEPS_PER_POINT);
+}
+
+// Level calculation from totalPoints using thresholds
+function computeLevel(points){
+  // find highest index where points >= threshold
+  let level = 1;
+  for(let i=0;i<LEVEL_THRESHOLDS.length;i++){
+    if(points >= LEVEL_THRESHOLDS[i]) level = i+1;
+  }
+  // compute current threshold and next threshold
+  const idx = Math.max(0, level-1);
+  const currentThreshold = LEVEL_THRESHOLDS[idx];
+  const nextThreshold = LEVEL_THRESHOLDS[idx+1] ?? (currentThreshold + 100); // last fallback
+  const progressPoints = points - currentThreshold;
+  const need = nextThreshold - currentThreshold;
+  const progressPercent = Math.min(100, Math.round((progressPoints / need) * 100));
+  return {level, currentThreshold, nextThreshold, progressPoints, need, progressPercent};
+}
+
+// Fruit generation logic: decide number & size of fruits based on points
+function fruitDataFromPoints(points){
+  // We'll create up to 5 fruits; each fruit's "growth" determined by thresholds
+  // For simplicity, map points ranges to fruit size multiplier
+  // small: <50, medium: 50-99, large: 100-199, XL: 200-499, harvest-ready: >=500
+  const fruits = [];
+  const maxFruits = 5;
+  for(let i=0;i<maxFruits;i++){
+    // base offset so fruits appear at different positions
+    const base = i * 10;
+    let stage = 'none'; // none, small, medium, large, xl, harvest
+    if(points >= 500) stage = 'harvest';
+    else if(points >= 200) stage = 'xl';
+    else if(points >= 100) stage = 'large';
+    else if(points >= 50) stage = 'medium';
+    else if(points >= 10) stage = 'small';
+    else stage = 'none';
+
+    // fruit size in px by stage
+    let size = 0;
+    let color = '#ff6b6b';
+    let label = '';
+    switch(stage){
+      case 'none': size = 0; break;
+      case 'small': size = 22; color='#ff9f43'; label='1'; break;
+      case 'medium': size = 34; color='#ff6b6b'; label='2'; break;
+      case 'large': size = 48; color='#ff4757'; label='3'; break;
+      case 'xl': size = 64; color='#fa5252'; label='4'; break;
+      case 'harvest': size = 78; color='#c2255c'; label='☆'; break;
+    }
+    fruits.push({i, stage, size, color, label, offset: base});
+  }
+  return fruits;
+}
+
+// render tree and fruits
+function renderTree(){
+  // update stats
+  totalStepsEl.textContent = state.totalSteps.toLocaleString();
+  totalPointsEl.textContent = state.totalPoints.toLocaleString();
+
+  // compute level
+  const lv = computeLevel(state.totalPoints);
+  levelNumEl.textContent = String(lv.level);
+  xpTextEl.textContent = `${lv.progressPoints}/${lv.need}`;
+  xpFillEl.style.width = lv.progressPercent + '%';
+
+  // next reward
+  let upcoming = REWARDS.find(r => state.totalPoints < r.points) ?? REWARDS[REWARDS.length-1];
+  nextRewardText.textContent = '다음 보상';
+  nextRewardDesc.textContent = `${upcoming.name} (${upcoming.points}P)`;
+
+  // harvest button enabled if >=500 (configurable)
+  if(state.totalPoints >= 500){
+    harvestBtn.disabled = false;
+    harvestStatus.textContent = '수확 가능';
+    harvestDesc.textContent = '축하해요! 수확을 눌러 보상을 받으세요.';
+  }else{
+    harvestBtn.disabled = true;
+    harvestStatus.textContent = '수확 불가';
+    harvestDesc.textContent = `현재 ${state.totalPoints}/${500}P`;
+  }
+
+  // render fruits visually
+  // remove old fruit elements
+  const existing = treeStage.querySelectorAll('.fruit');
+  existing.forEach(e => e.remove());
+
+  const fruits = fruitDataFromPoints(state.totalPoints);
+  // place fruits around leaves
+  const areaWidth = 220, areaHeight = 160;
+  fruits.forEach((f, idx) => {
+    if(f.size <= 0) return; // skip invisible
+    const el = document.createElement('div');
+    el.className = 'fruit';
+    // position: distribute across top area
+    const angle = (idx / 5) * Math.PI * 1.2 - 0.6; // -0.6 to 0.6
+    const r = 62 + (idx % 3) * 8;
+    const cx = 0 + Math.round(Math.cos(angle) * r);
+    const cy = -40 + Math.round(Math.sin(angle) * (r/2));
+    el.style.left = `calc(50% + ${cx}px)`;
+    el.style.top = `calc(20% + ${cy}px)`;
+    el.style.width = f.size + 'px';
+    el.style.height = f.size + 'px';
+    el.style.background = f.color;
+    el.style.opacity = 0.98;
+    el.style.transform = 'translate(-50%,-50%) scale(1)';
+    el.style.zIndex = 3;
+    el.textContent = f.label;
+    el.style.fontSize = Math.max(10, Math.round(f.size/3)) + 'px';
+    el.title = `${f.stage} 과일`;
+    // simple click: claim mini reward for large fruits (example)
+    el.addEventListener('click', () => {
+      addLog(`과일(크기:${f.stage})을 눌렀어요! 작은 보너스 효과 없음(데모)`);
+    });
+    treeStage.appendChild(el);
+  });
+
+  // leaf sway based on points (visual)
+  const sway = Math.min(1.4, 1 + state.totalPoints / 500);
+  leaves.style.transform = `scale(${1 + sway*0.02})`;
+}
+
+// log
+function addLog(text){
+  const t = new Date().toLocaleString();
+  const p = document.createElement('div');
+  p.style.fontSize='13px';
+  p.style.marginBottom='6px';
+  p.textContent = `[${t}] ${text}`;
+  logArea.prepend(p);
+  // keep timestamps
+  state.timestamps = state.timestamps || [];
+  state.timestamps.unshift({t:Date.now(), text});
+  if(state.timestamps.length>200) state.timestamps.pop();
+  saveState();
+}
+
+// add steps entry
+function addSteps(n){
+  if(!Number.isFinite(n) || n <= 0) return;
+  const prevSteps = state.totalSteps;
+  state.totalSteps += Math.round(n);
+  // compute new points from steps (but we store totalPoints separately to avoid double-counting)
+  // Option 1: recompute totalPoints from totalSteps:
+  state.totalPoints = stepsToPoints(state.totalSteps);
+  addLog(`${n}걸음 추가 → 총 ${state.totalSteps}걸음, ${state.totalPoints}포인트`);
+  renderTree();
+  saveState();
+}
+
+// harvest action example
+function harvestAction(){
+  if(state.totalPoints < 500) {
+    addLog('수확 불가: 포인트 부족');
+    return;
+  }
+  // Example reward: deduct 500 points and grant a "명예 칭호" and small log entry
+  state.totalPoints -= 500;
+  // convert back to steps approx for consistency: we can't roll back exact steps; keep steps as is but points change
+  addLog('🌾 수확 완료! 500P를 사용하여 가상 숲에 기부되었습니다. 명예 칭호 획득!');
+  renderTree();
+  saveState();
+}
+
+// reset
+function resetAll(){
+  if(!confirm('정말 초기화 하시겠어요? 모든 기록이 삭제됩니다.')) return;
+  state = { totalSteps:0, totalPoints:0, lastActionLog:'', timestamps:[] };
+  saveState();
+  addLog('데이터 초기화됨');
+  renderTree();
+}
+
+// Attach event handlers
+addStepsBtn.addEventListener('click',()=>{
+  const val = Number(inputSteps.value);
+  if(!val || val <= 0){ alert('추가할 걸음 수를 1이상 입력하세요.'); return; }
+  addSteps(val);
+  inputSteps.value = '';
+});
+simBtn.addEventListener('click', ()=> addSteps(100)); // simulate 100 steps
+harvestBtn.addEventListener('click', harvestAction);
+resetBtn.addEventListener('click', resetAll);
+
+// initialize
+function init(){
+  loadState();
+  renderTree();
+  addLog('앱 시작');
+}
+init();
+
+// Expose for console debug
+window._GreenStep = {
+  state, addSteps, harvestAction, computeLevel
+};
+</script>
+</body>
+</html>
